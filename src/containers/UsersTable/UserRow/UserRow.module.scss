@@ -1,0 +1,16 @@
+.UserRow {
+  &:hover td {
+    background-color: #fafafa;
+  }
+
+  &.ActiveRow td {
+    background-color: #e9f5fe;
+  }
+
+  td {
+    height: 46px;
+    background-color: #fff;
+    border-bottom: 1px solid #f2f2f5;
+    transition: background-color .15s ease-in-out;
+  }
+}

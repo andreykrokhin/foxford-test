@@ -1,0 +1,37 @@
+.Container {
+  width: 100%;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+@media (min-width: 576px) {
+  .Container {
+    max-width: 540px;
+  }
+}
+
+@media (min-width: 768px) {
+  .Container {
+    max-width: 720px;
+  }
+}
+
+@media (min-width: 992px) {
+  .Container {
+    max-width: 960px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .Container {
+    max-width: 1140px;
+  }
+}
+
+.ContainerFluid {
+  width: 100%;
+  padding-right: 16px;
+  padding-left: 16px;
+  margin-right: auto;
+  margin-left: auto;
+}
