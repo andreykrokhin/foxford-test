@@ -1,48 +1,54 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react'
+import React, { useEffect, useCallback, useMemo } from 'react'
+import { connect } from 'react-redux'
+import { fetchUsers, markUsers } from '../../redux/actions/actions'
 import { Checkbox, Message } from 'rsuite'
 import 'rsuite/dist/styles/rsuite-default.css'
 import Container from '../../hoc/Container/Container'
 import UserRow from './UserRow/UserRow'
 import classes from './UsersTable.module.scss'
 
-const UsersTable = ({ users }) => {
-  const [checkedIds, setcheckedIds] = useState([])  // Массив с id выбранных пользователей для чекбоксов в таблице
-  const [checkedUsers, setCheckedUsers] = useState([])  // Массив с именами выбранных пользователей для перечисления под таблицей
+const UsersTable = ({ users, markedUsersIds, fetchUsers, markUsers }) => {
 
-  // Определяем состояние чекбокса в шапке таблицы
+  /*
+  * Изначально markedUsersIds находился в стейте этого компонента, но в этом случае происходило много лишних ре-рендеров.
+  * Например, функции handleCheck и handleCheckAll переопределялись после каждого изменения массива markedUsersIds, из-за этого перерисовывались все чекбоксы, а не только нажатый.
+  * Тогда я решил вынести markedUsersIds в глобальный стейт и теперь при нажатии на чекбокс перерисовывается только он.
+  * 
+  * Имея 300 сотрудников, выбор всех полей работает вполне неплохо.
+  * При 1000 сотрудниках выбор всех полей уже заметно тормозит из-за того, что ре-рендерятся все 1000 чекбоксов.
+  * Чтобы это исправить, я бы использовал react-window, react-virtualized или window-table, но это усложнило бы пример и добавило бы лишних зависимостей.
+  * Мне показалось, что в данном задании вы ожидаете увидеть навыки использования нативных методов оптимизации React, а не умение пользоваться сторонними библиотеками :)
+  */
+
+  useEffect(() => {
+    if (!users.length) {
+      fetchUsers()
+    }
+  }, [fetchUsers, users])
+
+  // Определяем состояние чекбокса в шапке таблицы (indeterminate - полузаполненный, checked - заполненный)
   const generalCheckboxStatus = useMemo(() => {
     let isChecked = false
     let isIndeterminate = false
   
-    if (checkedIds.length === users.length) {
+    if (markedUsersIds.length === users.length) {
       isChecked = true
-    } else if (checkedIds.length === 0) {
+    } else if (markedUsersIds.length === 0) {
       isChecked = false
-    } else if (checkedIds.length > 0 && checkedIds.length < users.length) {
+    } else if (markedUsersIds.length > 0 && markedUsersIds.length < users.length) {
       isIndeterminate = true
     }
 
     return { indeterminate: isIndeterminate, checked: isChecked }
-  }, [checkedIds, users])
-
-  // Обновляем массив имен выбранных пользователей
-  useEffect(() => {
-    const newCheckedUsers = checkedIds.map(id => users.filter(user => user.id === id)[0].firstname)
-    setCheckedUsers(newCheckedUsers)
-  }, [checkedIds, users])
+  }, [markedUsersIds, users])
   
   const handleCheckAll = useCallback((value, checked) => {
-    const newcheckedIds = checked ? users.map(item => item.id) : []
-    setcheckedIds(newcheckedIds)
-  }, [users])
+    markUsers(users.map(item => item.id), checked)
+  }, [markUsers, users])
 
   const handleCheck = useCallback((value, checked) => {
-    const newcheckedIds = checked
-      ? [...checkedIds, value]
-      : checkedIds.filter(item => item !== value)
-
-    setcheckedIds(newcheckedIds)
-  }, [checkedIds])
+    markUsers(value, checked)
+  }, [markUsers])
 
   return (
     <Container>
@@ -66,20 +72,32 @@ const UsersTable = ({ users }) => {
                 </thead>
                 <tbody>
                   { users.map(user => (
-                    <UserRow key={user.id} user={user} isChecked={checkedIds.some(item => item === user.id)} onChange={handleCheck} />
+                    <UserRow key={user.id} user={user} isChecked={markedUsersIds.some(item => item === user.id)} onChange={handleCheck} />
                   )) }
                 </tbody>
               </table>
-              { checkedUsers.length
-                ? <Message type="success" description={`Пользователи: ${checkedUsers.join(', ')}`} />
-                : null
-              }
             </>
           : <p>Нет данных</p>
         }
       </div>
+      { markedUsersIds.length
+        ? <Message type="success" description={`Пользователи: ${markedUsersIds.map(id => users.filter(user => user.id === id)[0].firstname).join(', ')}`} />
+        : null
+      }
     </Container>
   )
 }
 
-export default UsersTable
+function mapStateToProps(state) {
+  return {
+    users: state.app.users,
+    markedUsersIds: state.app.markedUsersIds
+  }
+}
+
+const mapDispatchToProps = {
+  fetchUsers,
+  markUsers
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(UsersTable)
