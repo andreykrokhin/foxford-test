@@ -16,11 +16,11 @@ export function hideLoader() {
 
 export function fetchUsers() {
   return (dispatch) => {
-    dispatch({ type: SHOW_LOADER })
+    dispatch(showLoader())
     setTimeout(() => {
       const response = Array(300).fill(0).map(item => { return {id: faker.random.uuid(), firstname: faker.name.firstName(), lastname: faker.name.lastName(), age: 20 + faker.random.number(20)} })
       dispatch({ type: FETCH_USERS, payload: response })
-      dispatch({ type: HIDE_LOADER })
+      dispatch(hideLoader())
     }, 1000);
   }
 }
